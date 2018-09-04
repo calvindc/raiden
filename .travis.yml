@@ -5,7 +5,7 @@ stages:
   - name: integration
     if: type = cron OR commit_message =~ /\[ci integration\]/ OR tag IS present
   - name: deploy
-    if: tag IS present AND tag =~ /^v[\d]+\.[\d]+\.[\d]+/
+    if: type = cron OR tag IS present AND tag =~ /^v[\d]+\.[\d]+\.[\d]+/
 
 templates:
   job-template-test: &job-template-test
@@ -156,6 +156,7 @@ jobs:
       before_install: mkdir -p $HOME/.bin; export PATH=$PATH:$HOME/.bin; .travis/before_install.sh
       install: .travis/install.sh
       script:
+        - .travis/set_tag.sh
         - RAIDENVERSION=$TRAVIS_TAG make bundle-docker
         # Make sure the produced binary works
         - dist/raiden-${TRAVIS_TAG}-linux smoketest
@@ -169,7 +170,7 @@ jobs:
           tags: true
           repo: raiden-network/raiden
           branch: master
-# Disabled until automated release account is reactivated
+## Disabled until automated release account is reactivated
 #      - provider: pypi
 #        user: raiden_pypi_automated
 #        password:
@@ -180,6 +181,18 @@ jobs:
 #          distributions: sdist bdist_wheel
 #          repo: raiden-network/raiden
 #          branch: master
+      - provider: s3
+        access_key_id: MK22XIZDUYA3EWBHGAKD
+        secret_access_key:
+          secure: "j21aH69JW2vEg/uVkIIX7Z891aQpijZ17IdqV+2pW5Rn3+/Qsl7dnmNY0yzsx7iqlEGuqrb5TCsRxjX8sgMiPRppCon2NMkoZLpIRcnY0Wp2j1D/TNwyBbyYNwlaQZQshzIgmNE8+Df6o/XnpQ82lYpxr2K6VMz6KlvxOJtb6AyxplryiwJ4uUVHsndSF1LZkOKq7sEKBTMVXq1bKIc1Tb5EUDXV9fs7afeOYAW9iUzWWXCroRDZULolsBKcIL3a06eKLRIrIeQghd3KoopEeGEbyLEFqiakOOEflXMuZQuLKMFi4Qdn/v2KNzb1uh5KZTksYLN25jjgk4gD6QtPy1vODi199e8DeuQMNZL72yGA+HwkPNUyBcNH0qyG4Ecl0C0cawkVrvgBIH9e9XTtEUHbKsbyySwveVUKhxEcrBTTV4neI4if+VI1dNRcAWn7ttU1TAS2cZ3iz4nzOI4/Hygmpn+rpSltengQT9s+F49+JgJEraDnURHtuSZyMW83xyVUik2iAfrBCOPa+RzOlo9A+F1SvbzoO27sBQ761q630mrR2zodN0tZc1aJNu2Jeb1OxqPyGfBqy5bU699RT3VFISKisgg4Y5XgIbZzL0VcwXVDHQHgEIdIQ9vemuEgsoZxhYpRFoheBn9zZhzRTmLmyfhdNQraNXhHnSq6bS8="
+        bucket: "raiden-nightlies"
+        acl: public_read
+        local_dir: dist
+        cache_control: "max-age=31536000"
+        endpoint: https://ams3.digitaloceanspaces.com
+        on:
+          repo: raiden-network/raiden
+          branch: master
 
     - stage: deploy
       os: osx
@@ -198,6 +211,7 @@ jobs:
         - RAIDEN_NPM_MISSING_FATAL=1 python setup.py compile_webui
       script:
         # pdbpp interferes with pyinstaller, uninstall it
+        - .travis/set_tag.sh
         - pip uninstall -y pdbpp
         - pyinstaller --noconfirm --clean raiden.spec
         - cd dist && zip -9 -r raiden-${TRAVIS_TAG}-macOS.zip raiden*
@@ -220,5 +234,16 @@ jobs:
           skip_cleanup: true
           on:
             tags: true
+
+        - provider: s3
+          access_key_id: MK22XIZDUYA3EWBHGAKD
+          secret_access_key:
+            secure: "j21aH69JW2vEg/uVkIIX7Z891aQpijZ17IdqV+2pW5Rn3+/Qsl7dnmNY0yzsx7iqlEGuqrb5TCsRxjX8sgMiPRppCon2NMkoZLpIRcnY0Wp2j1D/TNwyBbyYNwlaQZQshzIgmNE8+Df6o/XnpQ82lYpxr2K6VMz6KlvxOJtb6AyxplryiwJ4uUVHsndSF1LZkOKq7sEKBTMVXq1bKIc1Tb5EUDXV9fs7afeOYAW9iUzWWXCroRDZULolsBKcIL3a06eKLRIrIeQghd3KoopEeGEbyLEFqiakOOEflXMuZQuLKMFi4Qdn/v2KNzb1uh5KZTksYLN25jjgk4gD6QtPy1vODi199e8DeuQMNZL72yGA+HwkPNUyBcNH0qyG4Ecl0C0cawkVrvgBIH9e9XTtEUHbKsbyySwveVUKhxEcrBTTV4neI4if+VI1dNRcAWn7ttU1TAS2cZ3iz4nzOI4/Hygmpn+rpSltengQT9s+F49+JgJEraDnURHtuSZyMW83xyVUik2iAfrBCOPa+RzOlo9A+F1SvbzoO27sBQ761q630mrR2zodN0tZc1aJNu2Jeb1OxqPyGfBqy5bU699RT3VFISKisgg4Y5XgIbZzL0VcwXVDHQHgEIdIQ9vemuEgsoZxhYpRFoheBn9zZhzRTmLmyfhdNQraNXhHnSq6bS8="
+          bucket: "raiden-nightlies"
+          acl: public_read
+          local_dir: dist
+          cache_control: "max-age=31536000"
+          endpoint: https://ams3.digitaloceanspaces.com
+          on:
             repo: raiden-network/raiden
             branch: master
