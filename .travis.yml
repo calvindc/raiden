@@ -156,7 +156,7 @@ jobs:
       before_install: mkdir -p $HOME/.bin; export PATH=$PATH:$HOME/.bin; .travis/before_install.sh
       install: .travis/install.sh
       script:
-        - .travis/set_tag.sh
+        - . .travis/set_tag.sh
         - RAIDENVERSION=$TRAVIS_TAG make bundle-docker
         # Make sure the produced binary works
         - dist/raiden-${TRAVIS_TAG}-linux smoketest
@@ -211,7 +211,7 @@ jobs:
         - RAIDEN_NPM_MISSING_FATAL=1 python setup.py compile_webui
       script:
         # pdbpp interferes with pyinstaller, uninstall it
-        - .travis/set_tag.sh
+        - . .travis/set_tag.sh
         - pip uninstall -y pdbpp
         - pyinstaller --noconfirm --clean raiden.spec
         - cd dist && zip -9 -r raiden-${TRAVIS_TAG}-macOS.zip raiden*
@@ -234,7 +234,6 @@ jobs:
           skip_cleanup: true
           on:
             tags: true
-
         - provider: s3
           access_key_id: MK22XIZDUYA3EWBHGAKD
           secret_access_key:
