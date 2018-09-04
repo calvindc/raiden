@@ -157,9 +157,9 @@ jobs:
       install: .travis/install.sh
       script:
         - . .travis/set_tag.sh
-        - RAIDENVERSION=$TRAVIS_TAG make bundle-docker
+        - make bundle-docker
         # Make sure the produced binary works
-        - dist/raiden-${TRAVIS_TAG}-linux smoketest
+        - dist/raiden-${RAIDENVERSION}-linux smoketest
       deploy:
       - provider: releases
         api_key:
@@ -182,12 +182,14 @@ jobs:
 #          repo: raiden-network/raiden
 #          branch: master
       - provider: s3
+        skip_cleanup: true
         access_key_id: MK22XIZDUYA3EWBHGAKD
         secret_access_key:
           secure: "j21aH69JW2vEg/uVkIIX7Z891aQpijZ17IdqV+2pW5Rn3+/Qsl7dnmNY0yzsx7iqlEGuqrb5TCsRxjX8sgMiPRppCon2NMkoZLpIRcnY0Wp2j1D/TNwyBbyYNwlaQZQshzIgmNE8+Df6o/XnpQ82lYpxr2K6VMz6KlvxOJtb6AyxplryiwJ4uUVHsndSF1LZkOKq7sEKBTMVXq1bKIc1Tb5EUDXV9fs7afeOYAW9iUzWWXCroRDZULolsBKcIL3a06eKLRIrIeQghd3KoopEeGEbyLEFqiakOOEflXMuZQuLKMFi4Qdn/v2KNzb1uh5KZTksYLN25jjgk4gD6QtPy1vODi199e8DeuQMNZL72yGA+HwkPNUyBcNH0qyG4Ecl0C0cawkVrvgBIH9e9XTtEUHbKsbyySwveVUKhxEcrBTTV4neI4if+VI1dNRcAWn7ttU1TAS2cZ3iz4nzOI4/Hygmpn+rpSltengQT9s+F49+JgJEraDnURHtuSZyMW83xyVUik2iAfrBCOPa+RzOlo9A+F1SvbzoO27sBQ761q630mrR2zodN0tZc1aJNu2Jeb1OxqPyGfBqy5bU699RT3VFISKisgg4Y5XgIbZzL0VcwXVDHQHgEIdIQ9vemuEgsoZxhYpRFoheBn9zZhzRTmLmyfhdNQraNXhHnSq6bS8="
         bucket: "raiden-nightlies"
         acl: public_read
-        local_dir: dist
+        before_script: cd dist; rm -rf temp; mkdir temp; cp raiden-${RAIDENVERSION}-linux temp
+        local_dir: temp
         cache_control: "max-age=31536000"
         endpoint: https://ams3.digitaloceanspaces.com
         on:
@@ -214,7 +216,7 @@ jobs:
         - . .travis/set_tag.sh
         - pip uninstall -y pdbpp
         - pyinstaller --noconfirm --clean raiden.spec
-        - cd dist && zip -9 -r raiden-${TRAVIS_TAG}-macOS.zip raiden*
+        - cd dist && zip -9 -r raiden-${RAIDENVERSION}-macOS.zip raiden*
         # Make sure the produced binary works
         - dist/raiden-${TRAVIS_TAG}-macOS smoketest
         # "Fix" Travis issues #6307 #6522 #9486
@@ -240,7 +242,8 @@ jobs:
             secure: "j21aH69JW2vEg/uVkIIX7Z891aQpijZ17IdqV+2pW5Rn3+/Qsl7dnmNY0yzsx7iqlEGuqrb5TCsRxjX8sgMiPRppCon2NMkoZLpIRcnY0Wp2j1D/TNwyBbyYNwlaQZQshzIgmNE8+Df6o/XnpQ82lYpxr2K6VMz6KlvxOJtb6AyxplryiwJ4uUVHsndSF1LZkOKq7sEKBTMVXq1bKIc1Tb5EUDXV9fs7afeOYAW9iUzWWXCroRDZULolsBKcIL3a06eKLRIrIeQghd3KoopEeGEbyLEFqiakOOEflXMuZQuLKMFi4Qdn/v2KNzb1uh5KZTksYLN25jjgk4gD6QtPy1vODi199e8DeuQMNZL72yGA+HwkPNUyBcNH0qyG4Ecl0C0cawkVrvgBIH9e9XTtEUHbKsbyySwveVUKhxEcrBTTV4neI4if+VI1dNRcAWn7ttU1TAS2cZ3iz4nzOI4/Hygmpn+rpSltengQT9s+F49+JgJEraDnURHtuSZyMW83xyVUik2iAfrBCOPa+RzOlo9A+F1SvbzoO27sBQ761q630mrR2zodN0tZc1aJNu2Jeb1OxqPyGfBqy5bU699RT3VFISKisgg4Y5XgIbZzL0VcwXVDHQHgEIdIQ9vemuEgsoZxhYpRFoheBn9zZhzRTmLmyfhdNQraNXhHnSq6bS8="
           bucket: "raiden-nightlies"
           acl: public_read
-          local_dir: dist
+          before_script: cd dist; rm -rf temp; mkdir temp; cp raiden-${RAIDENVERSION}-macOS.zip temp
+          local_dir: temp
           cache_control: "max-age=31536000"
           endpoint: https://ams3.digitaloceanspaces.com
           on:
